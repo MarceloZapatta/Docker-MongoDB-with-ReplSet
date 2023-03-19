@@ -1,0 +1,57 @@
+version: '3'
+services:
+  mongo1:
+    image: mongo
+    command: mongod --replSet rs0 --bind_ip_all --port 27021
+    ports:
+      - 27021:27021
+    volumes:
+      - mongo1-data:/data/db
+    networks:
+      - mongo-net
+    restart: always
+
+  mongo2:
+    image: mongo
+    command: mongod --replSet rs0 --bind_ip_all --port 27022
+    volumes:
+      - mongo2-data:/data/db
+    networks:
+      - mongo-net
+    ports:
+      - 27022:27022
+    restart: always
+    depends_on:
+      - mongo1
+
+  mongo3:
+    image: mongo
+    command: mongod --replSet rs0 --bind_ip_all --port 27023
+    volumes:
+      - mongo3-data:/data/db
+    networks:
+      - mongo-net
+    ports:
+      - 27023:27023
+    restart: always
+    depends_on:
+      - mongo1
+
+  mongo_replica_starter:
+    image: rtsp/mongosh
+    command: mongosh --host mongo1 --port 27021 --file ./scripts/init-replica-set.js
+    volumes:
+      - ./scripts:/scripts
+    networks:
+      - mongo-net
+    depends_on:
+      - mongo3
+
+volumes:
+  mongo1-data:
+  mongo2-data:
+  mongo3-data:
+
+networks:
+  mongo-net:
+    driver: bridge
